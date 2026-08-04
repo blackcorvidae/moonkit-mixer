@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Moonkit Mixer</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#b14eff">
@@ -99,7 +99,9 @@
   #app {
     position: relative; z-index: 2;
     display: flex; flex-direction: column; align-items: center;
-    min-height: 100vh; padding: 16px 20px 30px; gap: 12px;
+    min-height: 100vh; gap: 12px;
+    padding: calc(16px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
+             calc(30px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
   }
 
   /* ===== HEADER ===== */
@@ -291,14 +293,23 @@
   .seq-step.playing { box-shadow: 0 0 0 2px rgba(255,255,255,0.85); transform: scale(1.2); z-index: 1; }
   .seq-step.beat-mark { border-left: 1px solid rgba(140, 80, 200, 0.5); }
 
-  /* ===== CONTROLS ===== */
+  /* ===== CONTROL DECK ===== */
+  #control-deck {
+    width: 100%; max-width: 780px;
+    display: flex; flex-direction: column; gap: 10px;
+    background: rgba(10, 0, 22, 0.7);
+    border: 1px solid rgba(120, 70, 200, 0.2);
+    border-radius: 16px;
+    padding: 14px 16px;
+  }
   #controls {
     display: flex; align-items: center; gap: 14px;
-    flex-wrap: wrap; justify-content: center; padding: 4px 0;
+    flex-wrap: wrap; justify-content: center;
   }
   #fx-row {
     display: flex; align-items: center; gap: 12px;
-    flex-wrap: wrap; justify-content: center; padding: 2px 0;
+    flex-wrap: wrap; justify-content: center;
+    padding-top: 10px; border-top: 1px solid rgba(120, 70, 200, 0.15);
   }
   .control-group { display: flex; align-items: center; gap: 8px; }
   .control-group label {
@@ -364,7 +375,7 @@
     border: 2px solid rgba(120, 70, 200, 0.2);
     background: rgba(20, 5, 40, 0.6);
     display: flex; flex-direction: column;
-    align-items: center; gap: 4px;
+    align-items: center; gap: 4px; flex-shrink: 0;
     cursor: grab; transition: all 0.25s ease;
     position: relative;
     /* touch drag: keep the browser from claiming the gesture for scrolling */
@@ -387,6 +398,10 @@
     background: rgba(120, 70, 200, 0.3);
     display: flex; align-items: center; justify-content: center;
     font-size: 0.5rem; color: var(--text-muted); cursor: help;
+  }
+  .char-card .card-info::before {
+    /* invisible larger hit area so the dot stays small but is still tappable */
+    content: ''; position: absolute; inset: -10px;
   }
   .char-card .phase-badge {
     position: absolute; top: 3px; left: 5px;
@@ -572,7 +587,22 @@
     #controls { gap: 10px; }
     .control-group input[type="range"] { width: 60px; }
     .lore-card { max-width: 340px; }
-    #seq-panel { display: none; }
+
+    /* sequencer: keep it usable instead of hiding it — steps scroll
+       horizontally, the row label stays put */
+    .seq-label { min-width: 52px; max-width: 52px; }
+    .seq-char-name { display: none; }
+    .seq-ruler { margin-left: 60px; }
+    .seq-steps { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .seq-step { flex: 0 0 26px; }
+
+    /* character bar: scroll as a strip instead of wrapping into many rows */
+    #character-bar {
+      flex-wrap: nowrap; justify-content: flex-start;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x proximity; padding-bottom: 14px;
+    }
+    .char-card { scroll-snap-align: start; }
   }
 </style>
 </head>
@@ -615,39 +645,42 @@
     <div id="seq-rows"><div class="seq-empty">Add creatures to the stage to edit their patterns</div></div>
   </div>
 
-  <!-- MAIN CONTROLS -->
-  <div id="controls">
-    <div class="control-group">
-      <label>Tempo</label>
-      <input type="range" id="tempo" min="60" max="160" value="105">
-      <span class="value-display" id="tempo-val">105</span>
+  <!-- CONTROL DECK -->
+  <div id="control-deck">
+    <!-- MAIN CONTROLS -->
+    <div id="controls">
+      <div class="control-group">
+        <label>Tempo</label>
+        <input type="range" id="tempo" min="60" max="160" value="105">
+        <span class="value-display" id="tempo-val">105</span>
+      </div>
+      <div class="control-group">
+        <label>Vol</label>
+        <input type="range" id="volume" min="0" max="100" value="75">
+        <span class="value-display" id="volume-val">75</span>
+      </div>
+      <div id="mood-selector">
+        <label>Mood</label>
+        <button class="mood-btn active-mood" data-mood="dreamy">Dreamy</button>
+        <button class="mood-btn" data-mood="spooky">Spooky</button>
+        <button class="mood-btn" data-mood="wild">Wild</button>
+      </div>
+      <button class="btn" id="btn-play">&#9654; Play</button>
+      <button class="btn" id="btn-shuffle">&#127922; Shuffle</button>
+      <button class="btn" id="btn-clear">&#10005; Clear</button>
     </div>
-    <div class="control-group">
-      <label>Vol</label>
-      <input type="range" id="volume" min="0" max="100" value="75">
-      <span class="value-display" id="volume-val">75</span>
-    </div>
-    <div id="mood-selector">
-      <label>Mood</label>
-      <button class="mood-btn active-mood" data-mood="dreamy">Dreamy</button>
-      <button class="mood-btn" data-mood="spooky">Spooky</button>
-      <button class="mood-btn" data-mood="wild">Wild</button>
-    </div>
-    <button class="btn" id="btn-play">&#9654; Play</button>
-    <button class="btn" id="btn-shuffle">&#127922; Shuffle</button>
-    <button class="btn" id="btn-clear">&#10005; Clear</button>
-  </div>
 
-  <!-- FX + UTILITY ROW -->
-  <div id="fx-row">
-    <div class="control-group">
-      <label>Reverb</label>
-      <input type="range" id="reverb" min="0" max="100" value="25">
-      <span class="value-display" id="reverb-val">25%</span>
+    <!-- FX + UTILITY ROW -->
+    <div id="fx-row">
+      <div class="control-group">
+        <label>Reverb</label>
+        <input type="range" id="reverb" min="0" max="100" value="25">
+        <span class="value-display" id="reverb-val">25%</span>
+      </div>
+      <button class="btn" id="btn-lofi">Lo&#8209;Fi</button>
+      <button class="btn" id="btn-seq">&#9633; Seq</button>
+      <button class="btn" id="btn-share">&#8599; Share</button>
     </div>
-    <button class="btn" id="btn-lofi">Lo&#8209;Fi</button>
-    <button class="btn" id="btn-seq">&#9633; Seq</button>
-    <button class="btn" id="btn-share">&#8599; Share</button>
   </div>
 
   <div id="catalyst-zone">
