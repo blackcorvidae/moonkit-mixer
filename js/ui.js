@@ -8,7 +8,7 @@ import {
 import {
   STEPS, isPlaying, startPlayback, togglePlayback, toggleSequencer, setTempo,
 } from './sequencer.js';
-import { masterGain, delayNode, setReverb, toggleLofi, setMood } from './audio.js';
+import { masterGain, delayNode, setReverb, toggleLofi, setMood, setVibratoDepth } from './audio.js';
 
 // ===================================================================
 // UI RENDERING — starfield + stage
@@ -437,6 +437,11 @@ export function setupControls() {
     const v = parseInt(e.target.value);
     document.getElementById('reverb-val').textContent = v + '%';
     setReverb(v);
+  });
+  document.getElementById('vibrato').addEventListener('input', e => {
+    const v = parseInt(e.target.value);
+    document.getElementById('vibrato-val').textContent = v + '%';
+    setVibratoDepth(v / 100);
   });
 
   document.getElementById('btn-play').addEventListener('click', togglePlayback);

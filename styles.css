@@ -328,6 +328,30 @@
   .btn.lofi-active { background: rgba(255, 180, 50, 0.35); border-color: #f59e0b; color: #fcd34d; }
   .btn.seq-active { background: rgba(0, 229, 255, 0.2); border-color: var(--glow-cyan); color: var(--glow-cyan); }
 
+  /* ===== VIBRATO WHEEL — analog-keyboard-style mod wheel ===== */
+  .wheel-group { flex-direction: column; gap: 3px; }
+  .wheel-track { width: 22px; height: 64px; display: flex; align-items: center; justify-content: center; }
+  .wheel-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 62px; height: 12px; border-radius: 6px; outline: none;
+    transform: rotate(-90deg);
+    background: linear-gradient(90deg, #14051f, #2a1244 55%, rgba(0, 229, 255, 0.35));
+    border: 1px solid rgba(0, 229, 255, 0.25);
+  }
+  .wheel-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 4px;
+    background: var(--glow-cyan);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+    cursor: pointer;
+  }
+  .wheel-slider::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 4px; border: none;
+    background: var(--glow-cyan);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+    cursor: pointer;
+  }
+
   /* ===== MOOD SELECTOR ===== */
   #mood-selector { display: flex; gap: 6px; align-items: center; }
   #mood-selector label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
@@ -348,6 +372,7 @@
   .mood-btn[data-mood="dreamy"] { --mood-color: #b388ff; }
   .mood-btn[data-mood="spooky"] { --mood-color: #7c4dff; }
   .mood-btn[data-mood="wild"]   { --mood-color: #ff4081; }
+  .mood-btn[data-mood="sunny"]  { --mood-color: #ffcb47; }
 
   /* ===== CHARACTER BAR ===== */
   #char-bar-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; text-align: center; }

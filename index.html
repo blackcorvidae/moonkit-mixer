@@ -71,6 +71,7 @@
         <button class="mood-btn active-mood" data-mood="dreamy">Dreamy</button>
         <button class="mood-btn" data-mood="spooky">Spooky</button>
         <button class="mood-btn" data-mood="wild">Wild</button>
+        <button class="mood-btn" data-mood="sunny">Sunny</button>
       </div>
       <button class="btn" id="btn-play">&#9654; Play</button>
       <button class="btn" id="btn-shuffle">&#127922; Shuffle</button>
@@ -87,6 +88,13 @@
       <button class="btn" id="btn-lofi">Lo&#8209;Fi</button>
       <button class="btn" id="btn-seq">&#9633; Seq</button>
       <button class="btn" id="btn-share">&#8599; Share</button>
+      <div class="control-group wheel-group">
+        <label>Vibrato</label>
+        <div class="wheel-track">
+          <input type="range" id="vibrato" class="wheel-slider" min="0" max="100" value="0">
+        </div>
+        <span class="value-display" id="vibrato-val">0%</span>
+      </div>
     </div>
   </div>
 
