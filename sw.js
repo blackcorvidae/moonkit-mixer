@@ -1,4 +1,4 @@
-const CACHE = 'moonkit-v7';
+const CACHE = 'moonkit-v8';
 
 self.addEventListener('install', e => {
   const scope = self.registration.scope;
@@ -9,6 +9,8 @@ self.addEventListener('install', e => {
       scope + 'sw.js',
       scope + 'icon.svg',
       scope + 'icon-maskable.svg',
+      scope + 'styles.css',
+      scope + 'js/main.js',
     ]).catch(() => {}))
   );
   self.skipWaiting();
