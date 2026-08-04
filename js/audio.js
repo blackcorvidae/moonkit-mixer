@@ -515,6 +515,58 @@ export function playTotalityChord(time, evo) {
   });
 }
 
+// ── Phase 4: anthem voices ──
+
+function playHook(time, note, evo) {
+  // bright sustained lead line, built to carry a melodic hook
+  const m = mood();
+  const dur = (0.5 + evo * 0.12) * m.decayMult;
+  const base = applyMoodPitch(note, m);
+  const o1 = ctx.createOscillator(); o1.type = 'sawtooth';
+  const o2 = ctx.createOscillator(); o2.type = evo >= 2 ? 'square' : 'sawtooth';
+  o1.frequency.value = base;
+  o2.frequency.value = base * 1.003;
+  applyVibrato(o1, time, dur);
+  const filt = ctx.createBiquadFilter(); filt.type = 'lowpass';
+  filt.frequency.setValueAtTime((1200 + evo * 500) * m.filterMult, time);
+  filt.frequency.exponentialRampToValueAtTime((2600 + evo * 900) * m.filterMult, time + 0.08);
+  filt.Q.value = 2;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.2 + evo * 0.02, time + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  o1.connect(filt); o2.connect(filt);
+  filt.connect(gain); gain.connect(masterGain); gain.connect(delayNode);
+  o1.start(time); o2.start(time); o1.stop(time + dur + 0.15); o2.stop(time + dur + 0.15);
+}
+
+function playStomp(time, evo) {
+  // deep stadium stomp + clap layer — a driving anthem beat, not pitched
+  const m = mood();
+  const osc = ctx.createOscillator(); osc.type = 'triangle';
+  osc.frequency.setValueAtTime(110 + evo * 12, time);
+  osc.frequency.exponentialRampToValueAtTime(45, time + 0.14);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(0.55, time);
+  og.gain.exponentialRampToValueAtTime(0.001, time + (0.32 + evo * 0.05) * m.decayMult);
+  osc.connect(og); og.connect(masterGain);
+  osc.start(time); osc.stop(time + 0.5);
+
+  const layers = 2 + Math.floor(evo / 2);
+  for (let i = 0; i < layers; i++) {
+    const t = time + i * 0.01;
+    const noise = ctx.createBufferSource(); noise.buffer = noiseBuffer;
+    noise.playbackRate.value = 1 + Math.random() * 0.25;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+    bp.frequency.value = (1200 + Math.random() * 600) * m.filterMult; bp.Q.value = 1;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.16, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + (0.1 + evo * 0.015) * m.decayMult);
+    noise.connect(bp); bp.connect(g); g.connect(masterGain);
+    noise.start(t); noise.stop(t + 0.25);
+  }
+}
+
 export function playSoundForCharacter(char, step, time, evo) {
   const pattern = char.currentPattern;
   if (!pattern[step]) return false;
@@ -536,6 +588,8 @@ export function playSoundForCharacter(char, step, time, evo) {
     case 'chord':   playChord(time, evo); break;
     case 'growl':   playGrowl(time, note, evo); break;
     case 'bell':    playBell(time, note, evo); break;
+    case 'lead':    playHook(time, note, evo); break;
+    case 'stomp':   playStomp(time, evo); break;
     default: break;
   }
   return true;
