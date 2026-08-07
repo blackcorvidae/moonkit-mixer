@@ -92,13 +92,16 @@ export function renderStage() {
 
       slot.appendChild(charEl);
       slot.addEventListener('click', () => {
-        if (selectedChar !== null) { fuseIntoSlot(selectedChar, i); exitSelectMode(); }
+        // fuseIntoSlot itself clears the selection on success; a blocked
+        // attempt (eclipse full, not evolved enough) leaves it active so
+        // the same selection can be retried on a different slot
+        if (selectedChar !== null) fuseIntoSlot(selectedChar, i);
         else char.fusion ? unfuse(i) : removeFromStage(i);
       });
     } else {
       slot.innerHTML = `<div class="slot-number">${i + 1}</div>`;
       slot.addEventListener('click', () => {
-        if (selectedChar !== null) { addToStage(selectedChar, i); exitSelectMode(); }
+        if (selectedChar !== null) addToStage(selectedChar, i);
       });
     }
 
@@ -208,6 +211,11 @@ let selectedChar = null;
 // ===================================================================
 // V6: TOUCH DRAG
 // ===================================================================
+// shared with the V9 long-press-select movement check below — both must
+// agree on "how much wobble still counts as holding still", otherwise
+// whichever check has the tighter threshold silently wins the race on
+// the same pointermove and steals the gesture out from under the other
+const TAP_SLOP = 18;
 let touchDrag = null;
 let suppressNextCardClick = false;
 
@@ -234,7 +242,7 @@ function touchDragMove(e) {
   const ghost = document.getElementById('drag-ghost');
   if (!touchDrag.active) {
     // ignore micro-movement so plain taps still behave like clicks
-    if (Math.hypot(e.clientX - touchDrag.startX, e.clientY - touchDrag.startY) < 8) return;
+    if (Math.hypot(e.clientX - touchDrag.startX, e.clientY - touchDrag.startY) < TAP_SLOP) return;
     cancelLongPress(); // real drag started — long-press-to-select no longer applies
     touchDrag.active = true;
     const ghostAvatar = ghost.querySelector('.ghost-avatar');
@@ -288,7 +296,7 @@ function startLongPress(e, char) {
   cancelLongPress();
   longPress = {
     char, startX: e.clientX, startY: e.clientY,
-    timer: setTimeout(() => enterSelectMode(char), 450),
+    timer: setTimeout(() => enterSelectMode(char), 280),
   };
 }
 
@@ -299,7 +307,7 @@ function cancelLongPress() {
 
 function longPressPointerMove(e) {
   if (!longPress) return;
-  if (Math.hypot(e.clientX - longPress.startX, e.clientY - longPress.startY) > 8) cancelLongPress();
+  if (Math.hypot(e.clientX - longPress.startX, e.clientY - longPress.startY) > TAP_SLOP) cancelLongPress();
 }
 
 function enterSelectMode(char) {

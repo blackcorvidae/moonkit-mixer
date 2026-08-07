@@ -2,7 +2,7 @@ import { CHARACTERS } from './data.js';
 import { makeFusion } from './sprites.js';
 import { currentMood, MOODS, ctx, masterGain, reverbSend, setMood } from './audio.js';
 import { isPlaying, startPlayback, stopPlayback, seqOpen, renderSequencer, tempo, setTempo } from './sequencer.js';
-import { renderStage, renderCharacterBar, renderCatalystBar } from './ui.js';
+import { renderStage, renderCharacterBar, renderCatalystBar, exitSelectMode } from './ui.js';
 import { generatePattern } from './patterns.js';
 
 // ===================================================================
@@ -54,6 +54,7 @@ export function fuseIntoSlot(charId, slotIdx, force = false) {
   delete evolution[occupant.id];
   stageSlots[slotIdx] = fusion;
   evolution[fusion.id] = { bars: 0, level: 0 };
+  exitSelectMode();
   renderStage();
   renderCharacterBar();
   if (seqOpen) renderSequencer();
@@ -94,6 +95,7 @@ export function unfuse(slotIdx) {
       showToast(`💔 ${f.name} split — no room left, ${b.name} wandered off`);
     }
   }
+  exitSelectMode();
   renderStage();
   renderCharacterBar();
   if (seqOpen) renderSequencer();
@@ -108,6 +110,7 @@ export function addToStage(charId, slotIdx) {
   const pi = Math.floor(Math.random() * charDef.patterns.length);
   stageSlots[slotIdx] = { ...charDef, currentPattern: [...charDef.patterns[pi]], patternIndex: pi };
   if (!evolution[charId]) evolution[charId] = { bars: 0, level: 0 };
+  exitSelectMode();
   renderStage();
   renderCharacterBar();
   if (seqOpen) renderSequencer();
@@ -119,6 +122,7 @@ export function removeFromStage(slotIdx) {
   if (!char) return;
   delete evolution[char.id];
   stageSlots[slotIdx] = null;
+  exitSelectMode();
   renderStage();
   renderCharacterBar();
   if (seqOpen) renderSequencer();
@@ -142,6 +146,7 @@ export function shufflePatterns() {
 export function clearStage() {
   for (let i = 0; i < STAGE_SIZE; i++) stageSlots[i] = null;
   Object.keys(evolution).forEach(k => delete evolution[k]);
+  exitSelectMode();
   stopPlayback(); renderStage(); renderCharacterBar();
   if (seqOpen) renderSequencer();
 }
