@@ -134,6 +134,14 @@
   }
   .stage-slot.occupied { border-style: solid; cursor: pointer; }
   .stage-slot .slot-number { font-size: 1.3rem; opacity: 0.12; font-weight: 700; }
+  .stage-slot.select-target {
+    border-color: var(--glow-cyan);
+    animation: selectTargetPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes selectTargetPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(0, 229, 255, 0.25); }
+    50% { box-shadow: 0 0 18px rgba(0, 229, 255, 0.5); }
+  }
 
   /* Character on stage */
   .stage-character {
@@ -400,6 +408,16 @@
   }
   .char-card:active { cursor: grabbing; }
   .char-card.on-stage { opacity: 0.3; pointer-events: none; transform: scale(0.9); }
+  .char-card.selected {
+    transform: translateY(-4px);
+    border-color: var(--char-color, var(--glow-cyan));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px color-mix(in srgb, var(--char-color, var(--glow-cyan)) 55%, transparent);
+    animation: selectedPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes selectedPulse {
+    0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px color-mix(in srgb, var(--char-color, var(--glow-cyan)) 55%, transparent); }
+    50% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 32px color-mix(in srgb, var(--char-color, var(--glow-cyan)) 80%, transparent); }
+  }
   .char-card .card-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
   .char-card .card-name { font-size: 0.65rem; font-weight: 600; text-align: center; white-space: nowrap; }
   .char-card .card-role { font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }

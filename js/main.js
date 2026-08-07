@@ -5,7 +5,7 @@ import {
 import { togglePlayback, toggleSequencer } from './sequencer.js';
 import {
   createStars, renderStepDisplay, renderStage, renderCharacterBar,
-  renderCatalystBar, setupControls, setupTouchDrag, closeLoreCard,
+  renderCatalystBar, setupControls, setupTouchDrag, closeLoreCard, exitSelectMode,
 } from './ui.js';
 
 // ===================================================================
@@ -41,7 +41,7 @@ function init() {
       setReverb(next);
     }
     if (e.code === 'KeyQ') toggleSequencer();
-    if (e.code === 'Escape') closeLoreCard();
+    if (e.code === 'Escape') { closeLoreCard(); exitSelectMode(); }
   });
 }
 

@@ -3,7 +3,7 @@ import { makeSprite } from './sprites.js';
 import {
   stageSlots, getEvoLevel, isOnStage, unfuse, removeFromStage, fuseIntoSlot,
   addToStage, activeCatalyst, activateCatalyst, deactivateCatalyst, STAGE_SIZE,
-  shufflePatterns, clearStage, copyShareLink,
+  shufflePatterns, clearStage, copyShareLink, showToast,
 } from './state.js';
 import {
   STEPS, isPlaying, startPlayback, togglePlayback, toggleSequencer, setTempo,
@@ -90,11 +90,14 @@ export function renderStage() {
       }
 
       slot.appendChild(charEl);
-      slot.addEventListener('click', () => char.fusion ? unfuse(i) : removeFromStage(i));
+      slot.addEventListener('click', () => {
+        if (selectedChar !== null) { fuseIntoSlot(selectedChar, i); exitSelectMode(); }
+        else char.fusion ? unfuse(i) : removeFromStage(i);
+      });
     } else {
       slot.innerHTML = `<div class="slot-number">${i + 1}</div>`;
       slot.addEventListener('click', () => {
-        if (selectedChar !== null) { addToStage(selectedChar, i); selectedChar = null; }
+        if (selectedChar !== null) { addToStage(selectedChar, i); exitSelectMode(); }
       });
     }
 
@@ -158,9 +161,11 @@ export function renderCharacterBar() {
     card.addEventListener('pointerdown', e => {
       if (onStage) return;
       touchDragStart(e, char);
+      startLongPress(e, char);
     });
     card.addEventListener('dragstart', e => {
       if (onStage || (touchDrag && touchDrag.active)) { e.preventDefault(); return; }
+      cancelLongPress();
       e.dataTransfer.setData('text/plain', char.id);
       e.dataTransfer.effectAllowed = 'move';
       const ghost = document.getElementById('drag-ghost');
@@ -188,6 +193,7 @@ export function renderCharacterBar() {
       if (suppressNextCardClick) return;
       if (e.target.classList.contains('card-info')) return;
       if (onStage) return;
+      if (char.id === selectedChar) { exitSelectMode(); return; }
       const emptySlot = stageSlots.indexOf(null);
       if (emptySlot !== -1) { addToStage(char.id, emptySlot); if (!isPlaying) startPlayback(); }
     });
@@ -228,6 +234,7 @@ function touchDragMove(e) {
   if (!touchDrag.active) {
     // ignore micro-movement so plain taps still behave like clicks
     if (Math.hypot(e.clientX - touchDrag.startX, e.clientY - touchDrag.startY) < 8) return;
+    cancelLongPress(); // real drag started — long-press-to-select no longer applies
     touchDrag.active = true;
     const ghostAvatar = ghost.querySelector('.ghost-avatar');
     ghostAvatar.innerHTML = '';
@@ -268,10 +275,62 @@ function touchDragCancel(e) {
   clearSlotHighlights();
 }
 
+// ===================================================================
+// V9: LONG-PRESS TO SELECT — a forgiving alternative to precise
+// drag-to-fuse. Works for mouse and touch alike (unlike drag, which
+// forks into native HTML5 DnD for mouse vs. the pointer-based path
+// above for touch); mutually exclusive with both of those.
+// ===================================================================
+let longPress = null;
+
+function startLongPress(e, char) {
+  cancelLongPress();
+  longPress = {
+    char, startX: e.clientX, startY: e.clientY,
+    timer: setTimeout(() => enterSelectMode(char), 450),
+  };
+}
+
+function cancelLongPress() {
+  if (longPress) clearTimeout(longPress.timer);
+  longPress = null;
+}
+
+function longPressPointerMove(e) {
+  if (!longPress) return;
+  if (Math.hypot(e.clientX - longPress.startX, e.clientY - longPress.startY) > 8) cancelLongPress();
+}
+
+function enterSelectMode(char) {
+  cancelLongPress();
+  selectedChar = char.id;
+  // a click still fires after the long-press releases — swallow it so it
+  // doesn't also trigger the plain-tap instant-add-to-first-empty-slot path
+  suppressNextCardClick = true;
+  setTimeout(() => { suppressNextCardClick = false; }, 400);
+  document.querySelectorAll('.char-card').forEach(c => c.classList.toggle('selected', c.dataset.charId === char.id));
+  document.querySelectorAll('.stage-slot').forEach(s => s.classList.add('select-target'));
+  showToast(`${char.name} selected — tap a slot to place, or an occupied one to fuse`);
+}
+
+export function exitSelectMode() {
+  selectedChar = null;
+  document.querySelectorAll('.char-card.selected').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.stage-slot.select-target').forEach(s => s.classList.remove('select-target'));
+}
+
 export function setupTouchDrag() {
   document.addEventListener('pointermove', touchDragMove, { passive: true });
   document.addEventListener('pointerup', touchDragEnd);
   document.addEventListener('pointercancel', touchDragCancel);
+  document.addEventListener('pointermove', longPressPointerMove, { passive: true });
+  document.addEventListener('pointerup', cancelLongPress);
+  document.addEventListener('pointercancel', cancelLongPress);
+  document.addEventListener('click', e => {
+    if (selectedChar !== null && !e.target.closest('.char-card') && !e.target.closest('.stage-slot')) {
+      exitSelectMode();
+    }
+  });
 }
 
 
