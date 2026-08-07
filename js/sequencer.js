@@ -2,6 +2,7 @@ import { stageSlots, evolution, getEvoLevel, findCharState, catalystTempoMult } 
 import { ctx, playSoundForCharacter, playTotalityChord, playFusionSpark } from './audio.js';
 import { makeSprite } from './sprites.js';
 import { flashSlot, updateStepDisplay, renderStage } from './ui.js';
+import { chaosLevel } from './patterns.js';
 
 // ===================================================================
 // PATTERN MUTATION
@@ -9,8 +10,9 @@ import { flashSlot, updateStepDisplay, renderStage } from './ui.js';
 function mutatePattern(charState) {
   const p = charState.currentPattern;
   const role = charState.role;
-  const rate = ['kick','snare'].includes(role) ? 0.06 :
+  const baseRate = ['kick','snare'].includes(role) ? 0.06 :
                ['pad','ambient','sub','growl','bell'].includes(role) ? 0.04 : 0.1;
+  const rate = baseRate * (0.5 + chaosLevel);
   for (let i = 0; i < p.length; i++) {
     if (Math.random() < rate) p[i] = p[i] ? 0 : 1;
   }

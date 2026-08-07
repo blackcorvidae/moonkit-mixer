@@ -3,6 +3,7 @@ import { makeFusion } from './sprites.js';
 import { currentMood, MOODS, ctx, masterGain, reverbSend, setMood } from './audio.js';
 import { isPlaying, startPlayback, stopPlayback, seqOpen, renderSequencer, tempo, setTempo } from './sequencer.js';
 import { renderStage, renderCharacterBar, renderCatalystBar } from './ui.js';
+import { generatePattern } from './patterns.js';
 
 // ===================================================================
 // STAGE STATE
@@ -129,12 +130,7 @@ export function shufflePatterns() {
     if (!cs) return;
     const targets = cs.fusion ? cs.parts : [cs];
     targets.forEach(t => {
-      const def = CHARACTERS.find(c => c.id === t.id);
-      let idx;
-      do { idx = Math.floor(Math.random() * def.patterns.length); }
-      while (idx === t.patternIndex && def.patterns.length > 1);
-      t.patternIndex = idx;
-      t.currentPattern = [...def.patterns[idx]];
+      t.currentPattern = generatePattern(t.role);
     });
   });
   if (seqOpen) renderSequencer();

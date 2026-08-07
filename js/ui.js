@@ -9,6 +9,7 @@ import {
   STEPS, isPlaying, startPlayback, togglePlayback, toggleSequencer, setTempo,
 } from './sequencer.js';
 import { masterGain, delayNode, setReverb, toggleLofi, setMood, setVibratoDepth } from './audio.js';
+import { setChaos } from './patterns.js';
 
 // ===================================================================
 // UI RENDERING — starfield + stage
@@ -501,6 +502,14 @@ export function setupControls() {
     const v = parseInt(e.target.value);
     document.getElementById('vibrato-val').textContent = v + '%';
     setVibratoDepth(v / 100);
+  });
+  let chaosDebounce = null;
+  document.getElementById('chaos').addEventListener('input', e => {
+    const v = parseInt(e.target.value);
+    document.getElementById('chaos-val').textContent = v + '%';
+    setChaos(v / 100);
+    clearTimeout(chaosDebounce);
+    chaosDebounce = setTimeout(shufflePatterns, 120);
   });
 
   document.getElementById('btn-play').addEventListener('click', togglePlayback);
