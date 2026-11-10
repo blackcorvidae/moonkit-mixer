@@ -335,6 +335,9 @@
   .btn.active { background: rgba(177, 78, 255, 0.4); border-color: var(--glow-purple); }
   .btn.lofi-active { background: rgba(255, 180, 50, 0.35); border-color: #f59e0b; color: #fcd34d; }
   .btn.seq-active { background: rgba(0, 229, 255, 0.2); border-color: var(--glow-cyan); color: var(--glow-cyan); }
+  .btn.midi-active { background: rgba(57, 255, 136, 0.18); border-color: #39ff88; color: #9dffc4; }
+  .btn.midi-hit { animation: midi-hit 0.25s ease-out; }
+  @keyframes midi-hit { from { box-shadow: 0 0 18px #39ff88; } to { box-shadow: none; } }
 
   /* ===== VIBRATO WHEEL — analog-keyboard-style mod wheel ===== */
   .wheel-group { flex-direction: column; gap: 3px; }
