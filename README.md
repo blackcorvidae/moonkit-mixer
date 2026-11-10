@@ -20,6 +20,7 @@ A cute-creepy music playground for kids — drag glowing little creatures onto a
 - **4 catalyst creatures** that transform the whole stage at once (Blessed, Cursed, Wild, Evil)
 - **Shareable links** — the whole stage state lives in the URL, so a link is a save file
 - **Installable PWA** — works offline, mobile-friendly
+- **Hardware keyboard play** — plug in a MIDI keyboard (built for the M-VAVE FM-1) and hit 🎹 MIDI; see below
 - Zero build step: plain ES modules, no framework, no bundler
 
 ## Controls
@@ -34,6 +35,18 @@ A cute-creepy music playground for kids — drag glowing little creatures onto a
 | `L` | Toggle lo-fi |
 | `Q` | Toggle sequencer |
 | `Esc` | Close lore card / cancel selection |
+
+## Playing from a MIDI keyboard
+
+Click **🎹 MIDI** (Chrome or Edge — Safari has no Web MIDI), then play. Each key's note name picks a stage slot (C = slot 1 … B = slot 12, any octave):
+
+| On the keyboard | What happens |
+| --- | --- |
+| Tap a key on an empty slot | A random creature that isn't on stage yet jumps in |
+| Tap a key on an occupied slot | That creature re-rolls its pattern |
+| Hold a key (~⅔ s) | Unfuses a fusion, or sends a creature home |
+| Two keys together | The higher key's creature fuses into the lower key's |
+| Three or more keys together | Shuffles every pattern |
 
 ## Running locally
 
@@ -55,5 +68,6 @@ then open `http://localhost:8000`.
 | `js/patterns.js` | Procedural pattern generator behind the Chaos dial |
 | `js/state.js` | Stage state — add/remove/fuse, catalysts, share-link encode/decode |
 | `js/sequencer.js` | The playback engine and step sequencer UI |
+| `js/midi.js` | Web MIDI bridge — key gestures (tap, hold, chord) mapped onto the stage |
 | `js/ui.js` | Rendering + interaction — drag, touch, long-press-select, controls |
 | `js/main.js` | Wires it all together |

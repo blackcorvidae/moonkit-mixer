@@ -3,6 +3,7 @@ import {
   decodeState, shufflePatterns, clearStage,
 } from './state.js';
 import { togglePlayback, toggleSequencer } from './sequencer.js';
+import { connectMidi } from './midi.js';
 import {
   createStars, renderStepDisplay, renderStage, renderCharacterBar,
   renderCatalystBar, setupControls, setupTouchDrag, closeLoreCard, exitSelectMode,
@@ -19,6 +20,7 @@ function init() {
   renderCatalystBar();
   setupControls();
   setupTouchDrag();
+  document.getElementById('btn-midi').addEventListener('click', connectMidi);
 
   document.getElementById('start-screen').addEventListener('click', () => {
     initAudio();
