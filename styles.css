@@ -239,6 +239,45 @@
   }
   #seq-panel.open { max-height: 700px; }
 
+  /* ===== V9: ECHO PADS ===== */
+  #echo-panel {
+    width: 100%; max-width: 780px;
+    background: rgba(26, 4, 30, 0.7);
+    border: 1px solid rgba(255, 158, 203, 0.25);
+    border-radius: 16px;
+    overflow: hidden;
+    max-height: 0; opacity: 0; border-width: 0;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  }
+  #echo-panel.open { max-height: 220px; opacity: 1; border-width: 1px; }
+  .echo-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px 6px;
+  }
+  #echo-status { flex: 1; font-size: 0.7rem; color: #ffb9da; text-align: center; }
+  .btn-small { padding: 4px 10px; font-size: 0.62rem; }
+  #echo-pads {
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px;
+    padding: 6px 14px 14px;
+  }
+  .echo-pad {
+    height: 62px; border-radius: 14px; cursor: pointer;
+    border: 1px solid hsla(var(--pad-hue), 90%, 75%, 0.55);
+    background: radial-gradient(circle at 50% 30%, hsla(var(--pad-hue), 90%, 70%, 0.38), hsla(var(--pad-hue), 80%, 40%, 0.14));
+    color: hsla(var(--pad-hue), 90%, 88%, 0.75);
+    font-family: inherit; font-size: 0.8rem; font-weight: 700;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    transition: transform 0.08s ease;
+  }
+  .echo-pad:active { transform: scale(0.94); }
+  .echo-pad.lit { animation: padLit 0.45s ease-out; }
+  @keyframes padLit {
+    from { background: hsla(var(--pad-hue), 95%, 78%, 0.95); box-shadow: 0 0 22px hsla(var(--pad-hue), 95%, 70%, 0.9); color: #1a0420; }
+    to   { box-shadow: 0 0 0 hsla(var(--pad-hue), 95%, 70%, 0); }
+  }
+  .btn.echo-active { background: rgba(255, 158, 203, 0.2); border-color: #ff9ecb; color: #ffc4e0; }
+  .char-card .phase-badge.new-badge { background: rgba(255, 158, 203, 0.3); color: #ffd3e8; border-color: rgba(255, 158, 203, 0.6); }
+
   .seq-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 8px 14px 6px;
@@ -337,6 +376,15 @@
   .btn.seq-active { background: rgba(0, 229, 255, 0.2); border-color: var(--glow-cyan); color: var(--glow-cyan); }
   .btn.midi-active { background: rgba(57, 255, 136, 0.18); border-color: #39ff88; color: #9dffc4; }
   .btn.midi-hit { animation: midi-hit 0.25s ease-out; }
+  .midi-ch-label { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+  .midi-ch-select {
+    padding: 6px 10px; border-radius: 20px;
+    border: 1px solid rgba(120, 70, 200, 0.4);
+    background: rgba(120, 70, 200, 0.15);
+    color: var(--text-primary); font-family: inherit;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; cursor: pointer;
+  }
+  .midi-ch-select option { background: #1a1028; color: #eee; }
   @keyframes midi-hit { from { box-shadow: 0 0 18px #39ff88; } to { box-shadow: none; } }
 
   /* ===== VIBRATO WHEEL — analog-keyboard-style mod wheel ===== */
@@ -612,13 +660,19 @@
     #start-screen h1 { font-size: 2.5rem; }
     header h1 { font-size: 1.4rem; }
     #stage { grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
-    .stage-slot { min-height: 75px; border-radius: 14px; }
+    /* no forced square here: on a narrow phone an occupied slot is taller than
+       its column is wide, and a square would spill over its neighbours */
+    .stage-slot { min-height: 75px; border-radius: 14px; aspect-ratio: auto; min-width: 0; }
     .stage-character .char-avatar { width: 40px; height: 40px; }
     .char-card { width: 72px; padding: 8px 5px; }
     .char-card .card-avatar { width: 38px; height: 38px; }
     #controls { gap: 10px; }
     .control-group input[type="range"] { width: 60px; }
     .lore-card { max-width: 340px; }
+    #echo-pads { grid-template-columns: repeat(4, 1fr); padding: 6px 10px 12px; }
+    #echo-panel.open { max-height: 260px; }
+    .echo-pad { height: 54px; }
+    #echo-status { font-size: 0.62rem; }
 
     /* sequencer: keep it usable instead of hiding it — steps scroll
        horizontally, the row label stays put */

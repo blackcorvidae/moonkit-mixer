@@ -21,8 +21,8 @@
   <div class="start-emoji">🌙</div>
   <h1>Moonkit Mixer</h1>
   <p>click anywhere to start jamming</p>
-  <div class="version-tag">v8 — sunny mode · vibrato wheel · anthem creatures</div>
-  <div class="shortcuts">Space = play/stop · S = shuffle · C = clear · M = mood · R = reverb · L = lo-fi · Q = sequencer</div>
+  <div class="version-tag">v9 — echo echo · Echolotl repeats what you play · jam from a MIDI keyboard</div>
+  <div class="shortcuts">Space = play/stop · S = shuffle · C = clear · M = mood · R = reverb · L = lo-fi · Q = sequencer · 1–8 = echo pads</div>
 </div>
 
 <!-- STARFIELD + MOON -->
@@ -32,8 +32,8 @@
 <!-- APP -->
 <div id="app">
   <header>
-    <h1>🌙 Moonkit Mixer <span style="font-size:0.6em;color:var(--text-muted)">v8</span></h1>
-    <p>drag creatures onto the stage · drop one onto another to ⚡ fuse · a ★★ fusion can swallow a third 🌑 · click ? for lore</p>
+    <h1>🌙 Moonkit Mixer <span style="font-size:0.6em;color:var(--text-muted)">v9</span></h1>
+    <p>drag creatures onto the stage · drop one onto another to ⚡ fuse · a ★★ fusion can swallow a third 🌑 · play the 🫧 echo pads and Echolotl repeats you · click ? for lore</p>
   </header>
 
   <div id="stage-container"><div id="stage"></div></div>
@@ -51,6 +51,16 @@
       </div>
     </div>
     <div id="seq-rows"><div class="seq-empty">Add creatures to the stage to edit their patterns</div></div>
+  </div>
+
+  <!-- V9: ECHO PADS — play a tune, Echolotl repeats it -->
+  <div id="echo-panel">
+    <div class="echo-header">
+      <span class="seq-title">🫧 Echo pads</span>
+      <span id="echo-status"></span>
+      <button class="btn btn-small" id="btn-echo-forget" title="Make Echolotl forget its tune">&#129533; Forget</button>
+    </div>
+    <div id="echo-pads"></div>
   </div>
 
   <!-- CONTROL DECK -->
@@ -91,10 +101,18 @@
         <input type="range" id="reverb" min="0" max="100" value="25">
         <span class="value-display" id="reverb-val">25%</span>
       </div>
+      <div class="control-group">
+        <label>Echo</label>
+        <input type="range" id="echo" min="0" max="100" value="30">
+        <span class="value-display" id="echo-val">30%</span>
+      </div>
       <button class="btn" id="btn-lofi">Lo&#8209;Fi</button>
+      <button class="btn" id="btn-echo-pads" title="Show the Echo pads — play a tune and Echolotl repeats it">&#129767; Pads</button>
       <button class="btn" id="btn-seq">&#9633; Seq</button>
       <button class="btn" id="btn-share">&#8599; Share</button>
       <button class="btn" id="btn-midi" title="Connect a MIDI keyboard (e.g. M-VAVE FM-1)">&#127929; MIDI</button>
+      <button class="btn" id="btn-midi-out" title="Send creatures to a MIDI synth (e.g. M-VAVE FM-1): off → both → synth only">&#127899; Out: off</button>
+      <label class="midi-ch-label" title="MIDI channel the synth listens on (or the FM-1 V16 8-Voice split)">&#127898; <select id="midi-ch" class="midi-ch-select"></select></label>
       <div class="control-group wheel-group">
         <label>Vibrato</label>
         <div class="wheel-track">

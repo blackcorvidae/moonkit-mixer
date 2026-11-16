@@ -8,7 +8,7 @@ import {
 import {
   STEPS, isPlaying, startPlayback, togglePlayback, toggleSequencer, setTempo,
 } from './sequencer.js';
-import { masterGain, delayNode, setReverb, toggleLofi, setMood, setVibratoDepth } from './audio.js';
+import { masterGain, setReverb, toggleLofi, setMood, setVibratoDepth, setEcho, setEchoTime } from './audio.js';
 import { setChaos } from './patterns.js';
 
 // ===================================================================
@@ -132,10 +132,10 @@ export function renderCharacterBar() {
     if (onStage) card.classList.add('on-stage');
     card.draggable = true;
     card.dataset.charId = char.id;
-    if (char.phase === 3) {
+    if (char.phase === 3 || char.isNew) {
       const badge = document.createElement('div');
-      badge.className = 'phase-badge';
-      badge.textContent = 'P3';
+      badge.className = 'phase-badge' + (char.isNew ? ' new-badge' : '');
+      badge.textContent = char.isNew ? 'NEW' : 'P3';
       card.appendChild(badge);
     }
     const infoBtn = document.createElement('div');
@@ -494,7 +494,7 @@ export function setupControls() {
     const v = parseInt(e.target.value);
     setTempo(v);
     document.getElementById('tempo-val').textContent = v;
-    if (delayNode) delayNode.delayTime.value = (60.0 / v) * 0.75;
+    setEchoTime((60.0 / v) * 0.75);
   });
   document.getElementById('volume').addEventListener('input', e => {
     const v = parseInt(e.target.value);
@@ -505,6 +505,11 @@ export function setupControls() {
     const v = parseInt(e.target.value);
     document.getElementById('reverb-val').textContent = v + '%';
     setReverb(v);
+  });
+  document.getElementById('echo').addEventListener('input', e => {
+    const v = parseInt(e.target.value);
+    document.getElementById('echo-val').textContent = v + '%';
+    setEcho(v / 100);
   });
   document.getElementById('vibrato').addEventListener('input', e => {
     const v = parseInt(e.target.value);
