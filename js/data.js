@@ -1,5 +1,5 @@
 // ===================================================================
-// CHARACTER DEFINITIONS — 16 creatures (Phase 1+2+3)
+// CHARACTER DEFINITIONS — 19 creatures (Phase 1+2+3, anthem pair, Echolotl)
 // ===================================================================
 export const CHARACTERS = [
   // ── Phase 1 ──
@@ -264,6 +264,21 @@ export const CHARACTERS = [
       [1,0,1,0, 1,0,0,1, 0,0,1,0, 1,0,1,0],
     ],
     phase: 3,
+  },
+  // ── V9: the mimic ──
+  {
+    id: 'echolotl', name: 'Echolotl', emoji: '🫧',
+    title: 'Mimic Axolotl', role: 'echo', roleLabel: 'ECHO',
+    color: '#ff9ecb', bg: 'radial-gradient(circle at 35% 35%, #3a1030, #14041a)',
+    description: 'Lives at the bottom of the moon pool and has never had a tune of its own. It listens with its frilly gills, and whatever you play — on the Echo pads or a real keyboard — it sings straight back, over and over, until you teach it something new.',
+    evoStages: ['Shy copycat','Wobbly repeat','Perfect mimic','Hall of echoes'],
+    allies: [{id:'sunwisp',reason:'Repeats every hook it hums'},{id:'bloop',reason:'Moon-pool neighbours'}],
+    // One pattern and one note list — both are rewritten live by js/echo.js
+    patterns: [
+      [1,0,1,0, 0,0,0,0, 1,0,1,0, 0,0,0,0],
+    ],
+    notes: [523.25, 392.00, 392.00, 311.13, 349.23, 392.00, 466.16, 392.00, 622.25, 523.25, 523.25, 392.00, 349.23, 311.13, 392.00, 261.63],
+    isNew: true,
   },
 ];
 
@@ -650,6 +665,24 @@ export const SPRITES = {
     '0100000000000000',
     '0000000000000000',
     '0000000000000000',
+  ],
+  echolotl: [  // axolotl, front-facing, three frilly gills each side
+    '0100000000000010',
+    '1210000000000121',
+    '0121001111001210',
+    '1212012222102121',
+    '0121122222211210',
+    '1212222222222121',
+    '0012242222422100',
+    '0012212222122100',
+    '0012222222222100',
+    '0012223333222100',
+    '0001222222221000',
+    '0000122222210000',
+    '0001222222221000',
+    '0012212222122100',
+    '0001100220011000',
+    '0000000110000000',
   ],
   comethoof: [  // comet bison — horns + chunky stomping body
     '0001000000100000',

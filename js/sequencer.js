@@ -1,5 +1,5 @@
 import { stageSlots, evolution, getEvoLevel, findCharState, catalystTempoMult } from './state.js';
-import { ctx, playSoundForCharacter, playTotalityChord, playFusionSpark } from './audio.js';
+import { ctx, playSoundForCharacter, playTotalityChord, playFusionSpark, setEchoTime } from './audio.js';
 import { makeSprite } from './sprites.js';
 import { flashSlot, updateStepDisplay, renderStage } from './ui.js';
 import { chaosLevel } from './patterns.js';
@@ -10,6 +10,7 @@ import { chaosLevel } from './patterns.js';
 function mutatePattern(charState) {
   const p = charState.currentPattern;
   const role = charState.role;
+  if (role === 'echo') return;   // Echolotl repeats exactly what it heard
   const baseRate = ['kick','snare'].includes(role) ? 0.06 :
                ['pad','ambient','sub','growl','bell'].includes(role) ? 0.04 : 0.1;
   const rate = baseRate * (0.5 + chaosLevel);
@@ -76,10 +77,20 @@ function scheduleStep(step, time) {
   }
 }
 
+// Length of one sequencer step in seconds, and the step nearest to "now"
+// (used to drop a hand-played note onto the grid).
+export function stepSeconds() { return 60.0 / (tempo * catalystTempoMult) / 4; }
+export function stepNow() {
+  if (!isPlaying) return 0;
+  const pos = currentStep - (nextStepTime - ctx.currentTime) / stepSeconds();
+  return ((Math.round(pos) % STEPS) + STEPS) % STEPS;
+}
+
 function scheduler() {
+  setEchoTime(stepSeconds() * 3);   // echoes land on the dotted eighth
   while (nextStepTime < ctx.currentTime + LOOK_AHEAD) {
     scheduleStep(currentStep, nextStepTime);
-    nextStepTime += 60.0 / (tempo * catalystTempoMult) / 4;
+    nextStepTime += stepSeconds();
     currentStep = (currentStep + 1) % STEPS;
   }
 }
@@ -96,9 +107,13 @@ export function startPlayback() {
   document.body.classList.add('is-playing');
 }
 
+let stopListener = null;
+export function setStopListener(fn) { stopListener = fn; }
+
 export function stopPlayback() {
   if (!isPlaying) return;
   isPlaying = false;
+  if (stopListener) stopListener();
   clearInterval(schedulerTimer); schedulerTimer = null;
   currentStep = 0;
   document.getElementById('btn-play').innerHTML = '&#9654; Play';

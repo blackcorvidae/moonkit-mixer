@@ -4,6 +4,7 @@ import { currentMood, MOODS, ctx, masterGain, reverbSend, setMood } from './audi
 import { isPlaying, startPlayback, stopPlayback, seqOpen, renderSequencer, tempo, setTempo } from './sequencer.js';
 import { renderStage, renderCharacterBar, renderCatalystBar, exitSelectMode } from './ui.js';
 import { generatePattern } from './patterns.js';
+import { ECHO_ID, openEchoPads, encodeRiff, decodeRiff } from './echo.js';
 
 // ===================================================================
 // STAGE STATE
@@ -61,6 +62,7 @@ export function fuseIntoSlot(charId, slotIdx, force = false) {
   showToast(fusion.tier >= 2
     ? `🌑 TOTAL ECLIPSE — ${newPart.name} slid in front of ${occupant.name}: behold ${fusion.name}!`
     : `⚡ ${occupant.name} + ${newPart.name} fused into ${fusion.name}!`);
+  if (charId === ECHO_ID) openEchoPads();
   if (!isPlaying) startPlayback();
 }
 
@@ -114,6 +116,7 @@ export function addToStage(charId, slotIdx) {
   renderStage();
   renderCharacterBar();
   if (seqOpen) renderSequencer();
+  if (charId === ECHO_ID) openEchoPads();
   if (!isPlaying && stageSlots.some(Boolean)) startPlayback();
 }
 
@@ -134,7 +137,7 @@ export function shufflePatterns() {
     if (!cs) return;
     const targets = cs.fusion ? cs.parts : [cs];
     targets.forEach(t => {
-      t.currentPattern = generatePattern(t.role);
+      if (t.role !== 'echo') t.currentPattern = generatePattern(t.role);
     });
   });
   if (seqOpen) renderSequencer();
@@ -211,6 +214,7 @@ function encodeState() {
   p.set('t', tempo);
   p.set('v', Math.round((masterGain ? masterGain.gain.value : 0.75) * 100));
   p.set('m', currentMood);
+  if (isOnStage(ECHO_ID)) p.set('e', encodeRiff());   // what Echolotl remembers
   return '#' + p.toString();
 }
 
@@ -218,6 +222,7 @@ export function decodeState() {
   if (!window.location.hash || window.location.hash.length < 2) return;
   try {
     const p = new URLSearchParams(window.location.hash.slice(1));
+    decodeRiff(p.get('e'));
     const s = p.get('s');
     if (s) {
       s.split(',').forEach(part => {

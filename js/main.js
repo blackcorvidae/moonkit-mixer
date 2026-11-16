@@ -3,7 +3,8 @@ import {
   decodeState, shufflePatterns, clearStage,
 } from './state.js';
 import { togglePlayback, toggleSequencer } from './sequencer.js';
-import { connectMidi } from './midi.js';
+import { connectMidi, setupMidiOut } from './midi.js';
+import { setupEcho, playPad } from './echo.js';
 import {
   createStars, renderStepDisplay, renderStage, renderCharacterBar,
   renderCatalystBar, setupControls, setupTouchDrag, closeLoreCard, exitSelectMode,
@@ -21,6 +22,8 @@ function init() {
   setupControls();
   setupTouchDrag();
   document.getElementById('btn-midi').addEventListener('click', connectMidi);
+  setupMidiOut();
+  setupEcho();
 
   document.getElementById('start-screen').addEventListener('click', () => {
     initAudio();
@@ -43,6 +46,7 @@ function init() {
       setReverb(next);
     }
     if (e.code === 'KeyQ') toggleSequencer();
+    if (/^Digit[1-8]$/.test(e.code) && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) playPad(+e.code.slice(5) - 1);
     if (e.code === 'Escape') { closeLoreCard(); exitSelectMode(); }
   });
 }

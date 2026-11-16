@@ -46,6 +46,32 @@ function applyMoodPitch(note, m) {
   return currentMood === 'sunny' ? scaleSnap(shifted) : shifted;
 }
 
+// V9: the Echo dial. 0.3 is the classic Moonkit amount; higher pushes more
+// sound into the delay and makes it repeat longer. The delay time itself is
+// locked to three sequencer steps (a dotted eighth) by the sequencer.
+export let echoAmount = 0.3;
+export function setEcho(v) { echoAmount = v; applyEcho(); }
+function applyEcho() {
+  if (!delayNode) return;
+  const base = MOODS[currentMood];
+  const t = ctx.currentTime;
+  delayFeedback.gain.setTargetAtTime(Math.min(0.85, base.delayFeedback * (0.4 + 2 * echoAmount)), t, 0.03);
+  delayWet.gain.setTargetAtTime(Math.min(0.75, base.reverbWet * 0.4 * (echoAmount / 0.3)), t, 0.03);
+}
+let echoTime = 0.33;
+export function setEchoTime(sec) {
+  const v = Math.min(1, Math.max(0.05, sec));
+  if (!delayNode || Math.abs(v - echoTime) < 0.0005) return;
+  echoTime = v;
+  delayNode.delayTime.setTargetAtTime(v, ctx.currentTime, 0.05);
+}
+
+// MIDI out: the same mood-shaped pitch the browser voice would play, as a
+// MIDI note number (used to send creature hits to an external synth).
+export function moodMidiNote(freq) {
+  return Math.round(69 + 12 * Math.log2(applyMoodPitch(freq, mood()) / 440));
+}
+
 // V8: vibrato / mod-wheel — a live sine wobble on pitch depth, layered
 // onto a note's detune at trigger time (notes here are short one-shots,
 // not held tones, so there's no persistent LFO bus to hook into).
@@ -75,6 +101,16 @@ let delayWet = null;
 let noiseBuffer = null;
 let reverbNode = null;
 export let reverbSend = null;
+let localOut = null;
+let localMuted = false;
+export function setLocalMuted(m) {
+  localMuted = m;
+  if (localOut) localOut.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.02);
+}
+
+// One listener hears every creature hit (char, Hz note, AudioContext time, evo)
+let voiceListener = null;
+export function setVoiceListener(fn) { voiceListener = fn; }
 let lofiFilter = null;
 let lofiActive = false;
 
@@ -128,20 +164,26 @@ export function initAudio() {
   reverbSend = ctx.createGain();
   reverbSend.gain.value = 0.25;
 
-  // Chain: masterGain → compressor → lofiFilter → ctx.destination
-  //        masterGain → compressor → reverbSend → reverbNode → ctx.destination
+  // Local out — muted when an external synth (MIDI out) takes over the sound
+  localOut = ctx.createGain();
+  localOut.gain.value = localMuted ? 0 : 1;
+  localOut.connect(ctx.destination);
+
+  // Chain: masterGain → compressor → lofiFilter → localOut → ctx.destination
+  //        masterGain → compressor → reverbSend → reverbNode → localOut
   masterGain.connect(compressor);
   compressor.connect(lofiFilter);
-  lofiFilter.connect(ctx.destination);
+  lofiFilter.connect(localOut);
   compressor.connect(reverbSend);
   reverbSend.connect(reverbNode);
-  reverbNode.connect(ctx.destination);
+  reverbNode.connect(localOut);
 
   // Noise buffer
   const nLen = ctx.sampleRate * 2;
   noiseBuffer = ctx.createBuffer(1, nLen, ctx.sampleRate);
   const nd = noiseBuffer.getChannelData(0);
   for (let i = 0; i < nLen; i++) nd[i] = Math.random() * 2 - 1;
+  applyEcho();
 }
 
 // ===================================================================
@@ -567,10 +609,58 @@ function playStomp(time, evo) {
   }
 }
 
+function playEcho(time, note, evo) {
+  // V9: Echolotl — a glassy, slightly wobbly "ooh" that leans hard into the
+  // delay, so everything it repeats trails off in echoes of its own
+  const m = mood();
+  const dur = (0.42 + evo * 0.08) * m.decayMult;
+  const base = applyMoodPitch(note, m);
+  const o1 = ctx.createOscillator(); o1.type = 'sine';
+  const o2 = ctx.createOscillator(); o2.type = 'triangle';
+  o1.frequency.setValueAtTime(base * 1.04, time);            // a little scoop into the note
+  o1.frequency.exponentialRampToValueAtTime(base, time + 0.06);
+  o2.frequency.value = base * 2.005;
+  applyVibrato(o1, time, dur);
+  const g2 = ctx.createGain(); g2.gain.value = 0.18 + evo * 0.06;
+  const filt = ctx.createBiquadFilter(); filt.type = 'lowpass';
+  filt.frequency.value = (2400 + evo * 700) * m.filterMult; filt.Q.value = 1.2;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.24, time + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  const send = ctx.createGain(); send.gain.value = 1.4;
+  o1.connect(filt); o2.connect(g2); g2.connect(filt);
+  filt.connect(gain); gain.connect(masterGain); gain.connect(send); send.connect(delayNode);
+  o1.start(time); o2.start(time); o1.stop(time + dur + 0.1); o2.stop(time + dur + 0.1);
+  if (evo >= 3) {                                            // ★★★: a ghost answers an octave up
+    const o3 = ctx.createOscillator(); o3.type = 'sine'; o3.frequency.value = base * 2;
+    const g3 = ctx.createGain();
+    g3.gain.setValueAtTime(0, time + 0.11);
+    g3.gain.linearRampToValueAtTime(0.07, time + 0.13);
+    g3.gain.exponentialRampToValueAtTime(0.001, time + 0.11 + dur);
+    o3.connect(g3); g3.connect(masterGain); g3.connect(delayNode);
+    o3.start(time + 0.11); o3.stop(time + dur + 0.3);
+  }
+}
+
+// V9: a note played by hand (Echo pads / MIDI keys in jam mode), sounded
+// right now. toSynth also sends it to MIDI out — skip that when the note
+// came from the synth's own keys, which are already sounding there.
+export function playLive(char, hz, evo, toSynth) {
+  const t = ctx.currentTime;
+  if (toSynth && voiceListener) voiceListener(char, hz, t, evo);
+  playEcho(t, hz, evo);
+}
+let echoPlayListener = null;
+export function setEchoPlayListener(fn) { echoPlayListener = fn; }
+
 export function playSoundForCharacter(char, step, time, evo) {
   const pattern = char.currentPattern;
   if (!pattern[step]) return false;
+  // a step that was just played by hand already sounded — don't double it
+  if (char.skipStep === step && time < char.skipUntil) return false;
   const note = char.notes ? char.notes[step % char.notes.length] : 261.63;
+  if (voiceListener) voiceListener(char, note, time, evo);
   switch (char.role) {
     case 'kick':    playKick(time, evo); break;
     case 'snare':   playSnare(time, evo); break;
@@ -590,6 +680,7 @@ export function playSoundForCharacter(char, step, time, evo) {
     case 'bell':    playBell(time, note, evo); break;
     case 'lead':    playHook(time, note, evo); break;
     case 'stomp':   playStomp(time, evo); break;
+    case 'echo':    playEcho(time, note, evo); if (echoPlayListener) echoPlayListener(note, time); break;
     default: break;
   }
   return true;
@@ -601,10 +692,7 @@ export function playSoundForCharacter(char, step, time, evo) {
 export function setMood(m) {
   currentMood = m;
   document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.toggle('active-mood', btn.dataset.mood === m));
-  if (delayNode) {
-    delayFeedback.gain.value = MOODS[m].delayFeedback;
-    delayWet.gain.value = MOODS[m].reverbWet * 0.4; // scale to not overwhelm
-  }
+  applyEcho();
 }
 export function cycleMood() {
   const moods = Object.keys(MOODS);
